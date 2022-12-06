@@ -1,0 +1,266 @@
+import tkinter as tk
+import cv2
+
+#biblioteca para tkinter ler imagem do cv2
+from PIL import Image, ImageTk
+import os
+
+# C:/victor trabalhos/cowboy_perigoso.png
+# C:/victor trabalhos/Controle_Melhor.png
+# C:/victor trabalhos/cortina.png
+# C:\victor trabalhos
+
+
+#classe para que variaveis possam ser alteradas globalmente pelas funçoes dos botoes
+class variaveis:
+    arquivo="xxx"
+    foto = ([1,1,1])
+    hueeditor = 1
+    
+#Funções========================================================================
+   
+#Hue-------------------------------------------------------------------------
+        
+    def escrevehue(p):
+        botao.pack_forget()
+        frameedicaov.pack(side='top')
+        p.hueeditor = numero.get()
+        
+    
+    def quitedicaov(p):
+        frameedicaov.pack_forget()
+        botao.pack(side='top')
+        
+
+    #pega um valor e diminui da cor mais forte para adicionar à mais fraca
+    def lehue(p):
+        p.hueeditor = numero.get()
+        for coluna in range(p.foto.shape[0]):
+            for linha in range(p.foto.shape[1]):
+                if(p.foto[coluna,linha,0] > p.foto[coluna,linha,1] and p.foto[coluna,linha,0] > p.foto[coluna,linha,2]):
+                    if(p.foto[coluna,linha,1] > p.foto[coluna,linha,2]):
+                           p.foto[coluna,linha,0] = p.foto[coluna,linha,0] - p.hueeditor
+                           p.foto[coluna,linha,1] = p.foto[coluna,linha,1] + p.hueeditor
+                    else:
+                        p.foto[coluna,linha,0] = p.foto[coluna,linha,0] - p.hueeditor
+                        p.foto[coluna,linha,2] = p.foto[coluna,linha,2] + p.hueeditor
+                elif(p.foto[coluna,linha,1] > p.foto[coluna,linha,0] and p.foto[coluna,linha,1] > p.foto[coluna,linha,2]):
+                    if(p.foto[coluna,linha,0] > p.foto[coluna,linha,2]):
+                        p.foto[coluna,linha,1] = p.foto[coluna,linha,1] - p.hueeditor
+                        p.foto[coluna,linha,0] = p.foto[coluna,linha,0] + p.hueeditor
+                    else:
+                        p.foto[coluna,linha,1] = p.foto[coluna,linha,1] - p.hueeditor
+                        p.foto[coluna,linha,2] = p.foto[coluna,linha,2] + p.hueeditor
+                elif(p.foto[coluna,linha,2] > p.foto[coluna,linha,0] and p.foto[coluna,linha,2] > p.foto[coluna,linha,1]):
+                    if(p.foto[coluna,linha,0] > p.foto[coluna,linha,1]):
+                        p.foto[coluna,linha,2] = p.foto[coluna,linha,2] - p.hueeditor
+                        p.foto[coluna,linha,0] = p.foto[coluna,linha,0] + p.hueeditor
+                    else:
+                        p.foto[coluna,linha,2] = p.foto[coluna,linha,2] - p.hueeditor
+                        p.foto[coluna,linha,1] = p.foto[coluna,linha,1] + p.hueeditor
+        blue,green,red = cv2.split(p.foto)
+        p.xfoto = cv2.merge((red,green,blue))
+        p.fotox = Image.fromarray(p.xfoto)
+        p.fotoxx = ImageTk.PhotoImage(image=p.fotox)
+        imagem.configure(image=p.fotoxx)
+        
+        
+#Diretório-------------------------------------------------------------------
+    def lediretorio(p):
+        os.chdir(link.get())
+        framediretorio.pack_forget()
+        link.set("")
+        
+    def escrevediretorio(p):
+        framediretorio.pack()
+        
+        
+#Salvar----------------------------------------------------------------------  
+    def salvar(p):
+        framesalva.pack()
+        link.set("")
+    
+    def download(p):
+        print(link.get())
+        framesalva.pack_forget()
+        cv2.imwrite(link.get(),p.foto)
+        link.set("")
+        
+        
+#Abrir Arquivo--------------------------------------------------------------
+    def AbreArquivo(p):
+        frame1.pack_forget()
+        frameabre.pack()
+
+        
+    def clique(p):
+       frameabre.pack_forget()
+       p.arquivo=link.get()
+       frame1.pack()
+       
+      #le imagem com opencv e trasnforma ela em imagem elgivel pelo tkinter
+       p.foto = cv2.imread(p.arquivo)
+       blue,green,red = cv2.split(p.foto)
+       xfoto = cv2.merge((red,green,blue))
+       fotox = Image.fromarray(xfoto)
+       p.fotoxx = ImageTk.PhotoImage(image=fotox)
+       imagem.configure(image=p.fotoxx)
+       imagem.pack_forget()
+       imagem.pack()
+       link.set("")
+       
+       
+#Negativar------------------------------------------------------
+    def negativa(botaokk):
+        for coluna in range(botaokk.foto.shape[0]):
+            for linha in range(botaokk.foto.shape[1]):
+                for pixel in range(3):
+                    botaokk.foto[coluna, linha, pixel] = 255 - botaokk.foto[coluna, linha, pixel]
+        blue,green,red = cv2.split(botaokk.foto)
+        botaokk.xfoto = cv2.merge((red,green,blue))
+        botaokk.fotox = Image.fromarray(botaokk.xfoto)
+        botaokk.fotoxx = ImageTk.PhotoImage(image=botaokk.fotox)
+        imagem.configure(image=botaokk.fotoxx)
+              
+        
+        
+        
+#Na Janela=======================================================================
+janela = tk.Tk()
+p = variaveis()
+
+numero = tk.IntVar()
+link = tk.StringVar()
+janela.grid_columnconfigure(0, weight=1)
+janela.grid_columnconfigure(1, weight=1)
+
+#Menu
+menu = tk.Menu()
+
+arquivo = tk.Menu(menu, tearoff = 0)
+menu.add_cascade(label ='Arquivo', menu = arquivo)
+arquivo.add_command(label ='Novo Arquivo', command = p.AbreArquivo)
+arquivo.add_command(label ='Diretório', command = p.escrevediretorio)
+arquivo.add_command(label ='Salvar', command = p.salvar)
+arquivo.add_separator()
+arquivo.add_command(label ='Sair', command = janela.destroy)
+  
+janela.config(menu = menu)
+
+
+
+
+
+#--------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------
+
+
+#Salvar Imagem------------------------------------------------------------------
+framesalva = tk.Frame()
+NomeDownload = tk.Entry(framesalva,
+                        textvariable=link)
+BotaoDownload = tk.Button(
+    framesalva,
+    text="Download",
+    command=p.download)
+NomeDownload.pack()
+BotaoDownload.pack()
+
+
+#Setar Diretório-----------------------------------------------------------------
+framediretorio = tk.Frame()
+
+LinkDiretorio = tk.Entry(framediretorio,
+                         textvariable=link)
+
+diretorio = tk.Button(
+    framediretorio,
+    text="Diretorio",
+    command=p.lediretorio
+    )
+LinkDiretorio.pack()
+diretorio.pack()
+
+
+#Abrir Arquivo-------------------------------------------------------------------
+frameabre = tk.Frame()
+LinkImagem = tk.Entry(frameabre,
+                      textvariable=link)
+confirmar = tk.Button(frameabre,
+                      text="Confirmar",
+                      command=p.clique)
+LinkImagem.pack()
+confirmar.pack()
+
+
+
+#edita-------------------------------------------------------------------------
+frame2 = tk.Frame()
+
+botao = tk.Button(
+    frame2,
+    text="Ediçao V",
+    width=20,
+    height=10,
+    bg="white",
+    command=p.escrevehue
+    )
+botao.pack()
+
+botao2 = tk.Button(
+    frame2,
+    text="negativa",
+    width=20,
+    height=10,
+    bg="white",
+    command=p.negativa
+)
+botao2.pack()
+
+#Imagem---------------------------------------------------------------------
+frame1 = tk.Frame(
+    width=100,
+    height=20)
+
+fotoxx = tk.PhotoImage(p.foto)
+imagem = tk.Label(
+    frame1,
+    image=None
+    )
+
+
+
+#Edição V------------------------------------------------------------------------
+frameedicaov = tk.Frame(
+    frame2)
+leedicaov = tk.Button(
+    frameedicaov,
+    text="Aplica",
+    bg="white",
+    command=p.lehue
+    )
+
+fechaedicaov = tk.Button(
+    frameedicaov,
+    text="Fechar",
+    bg="white",
+    command=p.quitedicaov
+    )
+
+leedicaov.pack()
+
+
+NmrEdicaov = tk.Entry(frameedicaov,
+                      textvariable=numero)
+NmrEdicaov.pack()
+fechaedicaov.pack()
+
+
+
+frame1.pack(side='left')
+frame2.pack(side='right')
+
+
+
+janela.mainloop()
